@@ -1,0 +1,37 @@
+this <- getModelInfo('svmLinear2')[[1]]
+
+this$parameters <- this$parameters %>%
+  bind_rows(data_frame(parameter = 'gamma',
+                       class = 'numeric',
+                       label = 'Tuning'))
+
+this$grid <- function(x, y, len = NULL, search = "grid") {
+  if(search == "grid") {
+    out <- expand.grid(cost = 2 ^((1:len) - 3),
+                       gamma = 1:len / 2)
+  } else {
+    out <- data.frame(cost = 2^runif(len, min = -5, max = 10),
+                      gamma = runif(len, min = .5, max = 10))
+  }
+  out
+}
+
+this$fit <- function(x, y, wts, param, lev, last, classProbs, ...) {
+  if(any(names(list(...)) == "probability") | is.numeric(y))
+  {
+    out <- svm(x = x, y = y,
+               kernel = "radial",
+               cost = param$cost,
+               gamma = param$gamma,
+               ...)
+  } else {
+    out <- svm(x = x, y = y,
+               kernel = "radial",
+               cost = param$cost,
+               gamma = param$gamma,
+               probability = classProbs,
+               ...)
+  }
+  
+  out
+}
